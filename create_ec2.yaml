@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    ami_id: "ami-0cff7528ff583bf9a"
+  module_defaults:
+    group/aws:
+      region: "us-east-1"
+  tasks:
+    - name: Provision Ross EC2 Instance
+      ec2:
+        key_name: KeyInstance1
+        group: module5-developer-sg
+        instance_type: t3.nano
+        image: "{{ ami_id }}"
+        instance_tags:
+          Name: module5 ross
+          Module: 5
+          Department: devops
+        wait: yes
+        vpc_subnet_id: "{{ public_subnet.subnet.id }}"
+        assign_public_ip: yes
+        exact_count: 1
+        count_tag:
+          Name: module5 ross
+        user_data: "{{ lookup('file', './scripts/ec2_startup.sh') }}"

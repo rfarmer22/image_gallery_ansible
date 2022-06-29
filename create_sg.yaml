@@ -1,0 +1,130 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Create ig-AllowSSH security group
+    ec2_group:
+      name: module5-ig-AllowSSH-sg
+      description: Security group to allow SSH
+      vpc_id: "{{ vpc.vpc.id }}"
+      rules:
+        - proto: tcp
+          ports: 22
+          cidr_ip: 68.119.93.72/32
+          rule_desc: Grader IP
+        - proto: tcp
+          ports: 22
+          cidr_ip: 24.239.105.213/32
+          rule_desc: Instructor IP
+        - proto: tcp
+          ports: 22
+          cidr_ip: 69.73.61.236/32
+          rule_desc: My IP
+      state: present
+  - name: Create nginx servers security group
+    ec2_group:
+      name: module5-nginx-servers-sg
+      description: Security group for nginx servers
+      vpc_id: "{{ vpc.vpc.id }}"
+      rules:
+        - proto: tcp
+          ports: 22
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          ports: 80
+          cidr_ip: 69.73.61.236/32
+          rule_desc: My IP
+      state: present
+    register: nginx-sg
+  - name: Create ig-HTTPfromLoadBalancer security group
+    ec2_group:
+      name: module5-ig-HTTPfromLoadBalancer-sg
+      description: Security group to all HTTP connections from Load Balancer
+      vpc_id: "{{ vpc.vpc.id }}"
+      rules:
+        - proto: tcp
+          ports: 80
+          cidr_ip: 10.1.0.0/16
+      rules_egress:
+      state: present
+    register: HTTPfromLB-sg
+  - name: Create ig-postgres-tag security group
+    ec2_group:
+      name: module5-ig-postgres-tag-sg
+      description: Postgres Tag Group
+      purge_rules: no
+      purge_rules_egress: no
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+    register: postgres-tag-sg
+  - name: Create ig-postgres security group
+    ec2_group:
+      name: module5-ig-postgres-sg
+      description: Security group to define postgres sg
+      purge_rules: no
+      purge_rules_egress: no
+      vpc_id: "{{ vpc.vpc.id }}"
+      rules:
+        - proto: tcp
+          ports: 5432
+          group_id: "{{ postgres-tag-sg.group_id }}"
+      rules_egress:
+      state: present
+      register: postgres-sg
+  - name: Link Postgres Tag Group to Postgres Group
+    ec2_group:
+      name: module5-ig-postgres-tag-sg
+      description: Security group to define postgres sg
+      purge_rules: no
+      purge_rules_egress: no
+      vpc_id: "{{ vpc.vpc.id }}"
+      rules_egress:
+        - proto: tcp
+          ports: 5432
+          group_id: "{{ postgres-sg.group_id }}"
+      rules_egress:
+      state: present
+  - name: Create ig-development security group
+    ec2_group:
+      name: module5-ig-development-sg
+      description: Allow inbound/outbound rules for IPs via port 5000
+      vpc_id: "{{ vpc.vpc.id }}"
+      rules:
+        - proto: tcp
+          ports: 5000
+          cidr_ip: 68.119.93.72/32
+          rule_desc: Grader IP
+        - proto: tcp
+          ports: 5000
+          cidr_ip: 24.239.105.213/32
+          rule_desc: Instructor IP
+        - proto: tcp
+          ports: 5000
+          cidr_ip: 69.73.61.236/32
+          rule_desc: My IP
+        - proto: tcp
+          ports: 222
+          cidr_ip: 0.0.0.0/0
+          rule_desc: My IP
+        - proto: tcp
+          ports: 80
+          cidr_ip: 69.73.61.236/32
+          rule_desc: HTTP for my IP
+      rules_egress:
+        - proto: tcp
+          ports: 5000
+          cidr_ip: 68.119.93.72/32
+          rule_desc: Grader IP
+        - proto: tcp
+          ports: 5000
+          cidr_ip: 24.239.105.213/32
+          rule_desc: Instructor IP
+        - proto: tcp
+          ports: 5000
+          cidr_ip: 69.73.61.236/32
+          rule_desc: My IP
+        - proto: tcp
+          ports: 222
+          cidr_ip: 0.0.0.0/0
+          rule_desc: My IP
+      state: present

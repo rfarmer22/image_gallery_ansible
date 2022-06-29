@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/aws:
+      regions: "us-east-1"
+  tasks:
+    - name: Create Target Group
+      elb_target_group:
+        name: module5-ig-targetgroup
+        protocol: http
+        port: 80
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: present
+      register: ig-targetgroup
+    - name: Create Network Load Balancer
+      elb_network_lb:
+      name: module5-ig-network-load-balancer
+      subnet_mappings:
+        - SubnetId: "subnet-06170c5116a77b092"
+          AllocationId: 52.45.118.17
+        - SubnetId: "subnet-09a437c0f0bae8390"
+          AllocationId: 34.231.87.218
+      listeners:
+        - Protocol: TCP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ ig-targetgroup.target_group_name }}"
+        - Protocol: TLS
+          Port: 443
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ ig-targetgroup.target_group_name }}"
+      state: present
+    register: ig-nlb

@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/aws:
+      regions: "us-east-1"
+  tasks:
+    - name: Create Launch Template
+      ec2_launch_template:
+        name: "module5-launch-template"
+        image_id: "ami-0cff7528ff583bf9a"
+        key_name: KeyInstance1
+        instance_type: t2.micro
+        iam_instance_profile: image-gallery-conf-server-role
+        network_interfaces:
+        - device_index: 0
+          associate_public_ip_address: yes
+          groups:
+            - "{{ HTTPfromLB-sg.group_id }}"
+            - "{{ postgres-tag-sg.group_id }}"
+            - "{{ nginx-sg.group_id }}"
+        user_data: "{{ lookup('file', './startup-scripts/ec2_startup.sh') }}"
+        tags:
+          Name: module5-ig-asg-server
+        state: present
+      register: ig-lt
