@@ -3,7 +3,7 @@
   gather_facts: no
   module_defaults:
     group/aws:
-      regions: "us-east-1"
+      region: "us-east-1"
   tasks:
     - name: Create Auto Scaling Group
       ec2_asg:
@@ -11,7 +11,7 @@
         health_check_type: ELB
         wait_for_instances: False
         launch_template:
-          launch_template_id: "{{ ig-lt.latest_version }}"
+          launch_template_name: "module5-launch-template"
         min_size: 2
         max_size: 4
         desired_capacity: 2
@@ -19,7 +19,7 @@
           - "us-east-1a"
           - "us-east-1b"
         vpc_zone_identifier:
-          - "subnet-06170c5116a77b092"
-          - "subnet-09a437c0f0bae8390"
-        target_group_arns: "{{ ig-targetgroup.target_group_arn }}"
+          - "{{ public_subnet_1.subnet.id }}"
+          - "{{ public_subnet_2.subnet.id }}"
+        target_group_arns: "{{ module5_ig_targetgroup.target_group_arn }}"
         state: present

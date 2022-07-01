@@ -1,8 +1,7 @@
 ---
 - import_playbook: create_vpc.yaml
-- import_playbook: create_ec2.yaml
-- import_playbook: create_nlb.yaml
 - import_playbook: create_sg.yaml
-- import_playbook: create_asg.yaml
+- import_playbook: create_nlb.yaml
 - import_playbook: create_launchtemplate.yaml
+- import_playbook: create_asg.yaml
 - import_playbook: create_rds.yaml

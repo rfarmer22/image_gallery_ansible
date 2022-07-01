@@ -3,34 +3,46 @@
   gather_facts: no
   module_defaults:
     group/aws:
-      regions: "us-east-1"
+      region: "us-east-1"
   tasks:
     - name: Create Target Group
       elb_target_group:
         name: module5-ig-targetgroup
-        protocol: http
+        protocol: tcp
         port: 80
         vpc_id: "{{ vpc.vpc.id }}"
         state: present
-      register: ig-targetgroup
+      register: module5_ig_targetgroup
+    - name: Get Elastic IP 1
+      ec2_eip_info:
+        filters:
+          tag:Name: "module5-nginx-eip-1"
+      register: m5_elastic_ip_1
+    - name: Get Elastic IP 2
+      ec2_eip_info:
+        filters:
+          tag:Name: "module5-nginx-eip-2"
+      register: m5_elastic_ip_2
     - name: Create Network Load Balancer
       elb_network_lb:
-      name: module5-ig-network-load-balancer
-      subnet_mappings:
-        - SubnetId: "subnet-06170c5116a77b092"
-          AllocationId: 52.45.118.17
-        - SubnetId: "subnet-09a437c0f0bae8390"
-          AllocationId: 34.231.87.218
-      listeners:
-        - Protocol: TCP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ ig-targetgroup.target_group_name }}"
-        - Protocol: TLS
-          Port: 443
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ ig-targetgroup.target_group_name }}"
-      state: present
-    register: ig-nlb
+        name: module5-ig-network-load-balancer
+        subnet_mappings:
+          - SubnetId: "{{ public_subnet_1.subnet.id }}"
+            AllocationId: "{{m5_elastic_ip_1.addresses[0].allocation_id}}"
+          - SubnetId: "{{ public_subnet_2.subnet.id }}"
+            AllocationId: "{{m5_elastic_ip_2.addresses[0].allocation_id}}"
+        listeners:
+          - Protocol: TCP
+            Port: 80
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ module5_ig_targetgroup.target_group_name }}"
+          - Protocol: TLS
+            Port: 443
+            Certificates:
+              - CertificateArn: "arn:aws:acm:us-east-1:097715841902:certificate/0e1afa7c-1e11-4d62-a3da-ef0c1b4681c6"
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ module5_ig_targetgroup.target_group_name }}"
+        state: present
+      register: module5_ig_nlb

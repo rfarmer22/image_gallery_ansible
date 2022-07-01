@@ -3,7 +3,7 @@
   gather_facts: no
   module_defaults:
     group/aws:
-      regions: "us-east-1"
+      region: "us-east-1"
   tasks:
     - name: Create Launch Template
       ec2_launch_template:
@@ -16,11 +16,11 @@
         - device_index: 0
           associate_public_ip_address: yes
           groups:
-            - "{{ HTTPfromLB-sg.group_id }}"
-            - "{{ postgres-tag-sg.group_id }}"
-            - "{{ nginx-sg.group_id }}"
-        user_data: "{{ lookup('file', './startup-scripts/ec2_startup.sh') }}"
+            - "{{ HTTPfromLB_sg.group_id }}"
+            - "{{ postgres_tag_sg.group_id }}"
+            - "{{ nginx_servers_sg.group_id }}"
+        user_data: "{{ lookup('file', './scripts/ec2_startup.sh') | b64encode }}"
         tags:
           Name: module5-ig-asg-server
         state: present
-      register: ig-lt
+      register: ig_launch_template

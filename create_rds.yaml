@@ -1,18 +1,21 @@
 ---
 - hosts: localhost
   gather_facts: no
+  vars_files:
+    - secret.yaml
   module_defaults:
     group/aws:
-      regions: "us-east-1"
+      region: "us-east-1"
   tasks:
     - name: RDS Private Group
       rds_subnet_group:
         name: module5-ig-private-dbgrp
+        description: RDS group of private sub
         subnets:
-          - subnet-05d60e2e337ecd492
-          - subnet-037c96e5bc06f64d6
+          - "{{ private_subnet_1.subnet.id }}"
+          - "{{ private_subnet_2.subnet.id }}"
         state: present
-      register: private-dbgrp
+      register: private_dbgrp
     - name: Create RDS DB
       rds:
         command: create
@@ -21,9 +24,9 @@
         size: 20
         instance_type: db.t3.micro
         username: postgres
-        password: "{{ postgres_password }}"
+        password: "{{ password }}"
         subnet: module5-ig-private-dbgrp
         tags:
           Environment: testing
           Application: cms
-        vpc_security_groups: "{{ postgres-sg.group_id }}"
+        vpc_security_groups: "{{ postgres_sg.group_id }}"

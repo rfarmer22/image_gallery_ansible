@@ -29,7 +29,7 @@
         tags:
           Name: module5 public-sn-2
           Module: 5
-        cidr: 10.10.0.0/24
+        cidr: 10.10.1.0/24
         az: "us-east-1b"
         state: present
       register: public_subnet_2
@@ -39,7 +39,7 @@
         tags:
           Name: module5 private-sn-1
           Module: 5
-        cidr: 10.10.1.0/24
+        cidr: 10.10.2.0/24
         az: "us-east-1a"
         state: present
       register: private_subnet_1
@@ -49,7 +49,7 @@
         tags:
           Name: module5 private-sn-2
           Module: 5
-        cidr: 10.10.1.0/24
+        cidr: 10.10.3.0/24
         az: "us-east-1b"
         state: present
       register: private_subnet_2
@@ -65,7 +65,7 @@
       ec2_vpc_route_table:
         vpc_id: "{{ vpc.vpc.id }}"
         tags:
-          Name: module5
+          Name: module5-public-rt
         subnets:
           - "{{ public_subnet_1.subnet.id }}"
           - "{{ public_subnet_2.subnet.id }}"
@@ -77,26 +77,13 @@
       ec2_vpc_route_table:
         vpc_id: "{{ vpc.vpc.id }}"
         tags:
-          Name: module5
+          Name: module5-private-rt
         subnets:
           - "{{ private_subnet_1.subnet.id }}"
           - "{{ private_subnet_2.subnet.id }}"
         routes:
           - dest: 0.0.0.0/0
             gateway_id: "{{ igw.gateway_id }}"
-        state: present
-    - name: Create security group
-      ec2_group:
-        name: module5-developer-sg
-        description: Developer security group
-        vpc_id: "{{ vpc.vpc.id }}"
-        rules:
-          - proto: tcp
-            ports:
-              - 22
-              - 80
-            cidr_ip: 0.0.0.0/0
-            rule_desc: allow all to ports 22 and 80
         state: present
     - name: Create public acl
       ec2_vpc_nacl:
@@ -108,8 +95,6 @@
         tags:
           Name: module5-ig-public-acl
         ingress:
-          # rule no, protocol, allow/deny, cidr, icmp_type, icmp_code,
-          #                                             port from, port to
           - [100, 'tcp', 'allow', '69.73.61.236/32', null, null, 5000, 5000]
           - [110, 'tcp', 'allow', '68.119.93.72/32', null, null, 5000, 5000]
           - [111, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
@@ -136,8 +121,6 @@
         tags:
           Name: module5-ig-private-acl
         ingress:
-          # rule no, protocol, allow/deny, cidr, icmp_type, icmp_code,
-          #                                             port from, port to
           - [100, 'tcp', 'allow', '10.10.0.0/16', null, null, 5432, 5432]
           - [140, 'tcp', 'allow', '0.0.0.0/0', null, null, 1024, 65535]
         egress:

@@ -10,6 +10,6 @@ keyed_groups:
   - key: tags.Module
     prefix: tag_Module_
     separator: ""
- - key: tags.Department
+  - key: tags.Department
     prefix: tag_Department_
     separator: ""

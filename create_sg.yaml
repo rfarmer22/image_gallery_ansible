@@ -1,6 +1,9 @@
 ---
 - hosts: localhost
   gather_facts: no
+  module_defaults:
+    group/aws:
+      region: "us-east-1"
   tasks:
   - name: Create ig-AllowSSH security group
     ec2_group:
@@ -35,7 +38,7 @@
           cidr_ip: 69.73.61.236/32
           rule_desc: My IP
       state: present
-    register: nginx-sg
+    register: nginx_servers_sg
   - name: Create ig-HTTPfromLoadBalancer security group
     ec2_group:
       name: module5-ig-HTTPfromLoadBalancer-sg
@@ -47,7 +50,7 @@
           cidr_ip: 10.1.0.0/16
       rules_egress:
       state: present
-    register: HTTPfromLB-sg
+    register: HTTPfromLB_sg
   - name: Create ig-postgres-tag security group
     ec2_group:
       name: module5-ig-postgres-tag-sg
@@ -56,7 +59,7 @@
       purge_rules_egress: no
       vpc_id: "{{ vpc.vpc.id }}"
       state: present
-    register: postgres-tag-sg
+    register: postgres_tag_sg
   - name: Create ig-postgres security group
     ec2_group:
       name: module5-ig-postgres-sg
@@ -67,22 +70,21 @@
       rules:
         - proto: tcp
           ports: 5432
-          group_id: "{{ postgres-tag-sg.group_id }}"
+          group_id: "{{ postgres_tag_sg.group_id }}"
       rules_egress:
       state: present
-      register: postgres-sg
+    register: postgres_sg
   - name: Link Postgres Tag Group to Postgres Group
     ec2_group:
       name: module5-ig-postgres-tag-sg
-      description: Security group to define postgres sg
+      description: Postgres Tag Group
       purge_rules: no
       purge_rules_egress: no
       vpc_id: "{{ vpc.vpc.id }}"
       rules_egress:
         - proto: tcp
           ports: 5432
-          group_id: "{{ postgres-sg.group_id }}"
-      rules_egress:
+          group_id: "{{ postgres_sg.group_id }}"
       state: present
   - name: Create ig-development security group
     ec2_group:
